@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Wpm.Clinic.Api/Wpm.Clinic.Api.csproj" />
+    <Project Path="src/Wpm.Clinic.Domain/Wpm.Clinic.Domain.csproj" />
+    <Project Path="src/Wpm.Management.Api/Wpm.Management.Api.csproj" />
+    <Project Path="src/Wpm.Management.Domain/Wpm.Management.Domain.csproj" />
+    <Project Path="src/Wpm.SharedKernel/Wpm.SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Wpm.Clinic.Domain.Tests/Wpm.Clinic.Domain.Tests.csproj" />
+    <Project Path="tests/Wpm.Management.Domain.Tests/Wpm.Management.Domain.Tests.csproj" />
+  </Folder>
+</Solution>
