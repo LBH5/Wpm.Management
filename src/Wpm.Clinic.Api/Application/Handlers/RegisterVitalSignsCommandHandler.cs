@@ -9,10 +9,10 @@ public class RegisterVitalSignsCommandHandler(IConsultationRepository consultati
 {
     public async Task HandleAsync(RegisterVitalSignsCommand command, CancellationToken cancellationToken = default)
     {
-        var consultation = await consultationRepository.GetByIdAsync(command.ConsultationId, cancellationToken) ?? throw new KeyNotFoundException($"Consultation with ID {command.ConsultationId} not found");
-        var vitalSigns = command.VitalSignsRecords.Select(vs => new VitalSigns(vs.RecordedAt,vs.Temperature,vs.HeartRate,vs.RespiratoryRate));
+        var consultation = await consultationRepository.LoadAsync(command.ConsultationId, cancellationToken) ?? throw new KeyNotFoundException($"Consultation with ID {command.ConsultationId} not found");
+        var vitalSigns = command.VitalSignsRecords.Select(vs => new VitalSigns(vs.RecordedAt, vs.Temperature, vs.HeartRate, vs.RespiratoryRate));
         consultation.RegisterVitalSigns(vitalSigns);
-        await consultationRepository.UpdateAsync(consultation, cancellationToken);
+        await consultationRepository.SaveAsync(consultation, cancellationToken);
 
     }
 }

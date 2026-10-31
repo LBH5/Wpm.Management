@@ -16,4 +16,5 @@ public record PatientId
     }
 
     public static implicit operator PatientId(Guid value) => new(value);
+    public static implicit operator Guid(PatientId patientId) => patientId.Value;
 }

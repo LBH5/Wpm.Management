@@ -8,8 +8,8 @@ public class SetDiagnosisCommandHandler(IConsultationRepository consultationRepo
 {
     public async Task HandleAsync(SetDiagnosisCommand command, CancellationToken cancellationToken = default)
     {
-        var consultation = await consultationRepository.GetByIdAsync(command.ConsultationId, cancellationToken) ?? throw new KeyNotFoundException($"Consultation with ID {command.ConsultationId} not found");
+        var consultation = await consultationRepository.LoadAsync(command.ConsultationId, cancellationToken) ?? throw new KeyNotFoundException($"Consultation with ID {command.ConsultationId} not found");
         consultation.SetDiagnosis(command.Diagnosis);
-        await consultationRepository.UpdateAsync(consultation, cancellationToken);
+        await consultationRepository.SaveAsync(consultation, cancellationToken);
     }
 }

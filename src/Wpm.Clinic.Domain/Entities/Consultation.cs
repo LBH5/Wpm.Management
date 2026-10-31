@@ -1,4 +1,5 @@
-﻿using Wpm.Clinic.Domain.ValueObjects;
+﻿using Wpm.Clinic.Domain.Events;
+using Wpm.Clinic.Domain.ValueObjects;
 using Wpm.SharedKernel;
 
 namespace Wpm.Clinic.Domain.Entities;
@@ -10,7 +11,7 @@ public class Consultation: AggregateRoot
     public DateTimeRange Date { get; private set; }
     public Text? Diagnosis { get; private set; }
     public Text? Treatment { get; private set; }
-    public PatientId PatientId { get; init; }
+    public PatientId PatientId { get; private set; }
     public Weight? CurrentWeight { get; private set; }
     public ConsultaionStatus Status { get; private set; }
 
@@ -18,38 +19,31 @@ public class Consultation: AggregateRoot
     public IReadOnlyList<VitalSigns> VitalSignsRecords => _vitalSignsRecords.AsReadOnly();
     public Consultation(PatientId patientId )
     {
-        Id = Guid.NewGuid();
-        PatientId = patientId;
-        Status = ConsultaionStatus.Open;
-        Date = DateTime.UtcNow;
+        ApplyDomainEvent(new ConsultationStarted(Guid.NewGuid(), patientId, DateTime.UtcNow));
+    }
+    public Consultation(IEnumerable<IDomainEvent> domainEvents)
+    {
+        LoadFromHistory(domainEvents);
     }
     public void SetDiagnosis(Text diagnosis)
     {
-        ValidateConsultationStatus();
-        Diagnosis = diagnosis;
+        ApplyDomainEvent(new DiagnosisUpdated(Id, diagnosis));
     }
 
     public void SetTreatment(Text treatment)
     {
-        ValidateConsultationStatus();
-        Treatment = treatment;
+        ApplyDomainEvent(new TreatmentUpdate(Id, treatment));
     }
 
     public void SetWeight(Weight weight)
     {
-        ValidateConsultationStatus();
-        CurrentWeight = weight;
+        ApplyDomainEvent(new WeightUpdate(Id, weight));
     }
 
     public void End()
     {
+        ApplyDomainEvent(new ConsultationEnded(Id, DateTime.UtcNow));
         ValidateConsultationStatus();
-        if(Diagnosis == null || Treatment == null || CurrentWeight == null)
-        {
-            throw new InvalidOperationException("Cannot close consultation without diagnosis, treatment, and weight.");
-        }
-        Date = new DateTimeRange(Date.StartedAt, DateTime.UtcNow);
-        Status = ConsultaionStatus.Closed;
     }
 
     public void AdministredDrug(DrugId drugId, Dose dose)
@@ -73,6 +67,40 @@ public class Consultation: AggregateRoot
         }
     }
 
+    protected override void ChangeStateByUsingDomainEvent(IDomainEvent domainEvent)
+    {
+        switch (domainEvent)
+        {
+            case ConsultationStarted consultationStarted:
+                Id = consultationStarted.ConsultationId;
+                PatientId = consultationStarted.PatientId;
+                Date = consultationStarted.StartedAt;
+                Status = ConsultaionStatus.Open;
+                break;
+            case DiagnosisUpdated diagnosisUpdated:
+                ValidateConsultationStatus();
+                Diagnosis = diagnosisUpdated.Diagnosis;
+                break;
+            case TreatmentUpdate treatmentUpdate:
+                ValidateConsultationStatus();
+                Treatment = treatmentUpdate.Treatment;
+                break;
+            case WeightUpdate weightUpdate:
+                ValidateConsultationStatus();
+                CurrentWeight = weightUpdate.Weight;
+                break;
+            case ConsultationEnded _:
+                if(Diagnosis == null || Treatment == null || CurrentWeight == null)
+                {
+                    throw new InvalidOperationException("Cannot close consultation without diagnosis, treatment, and weight.");
+                }
+                Date = new DateTimeRange(Date.StartedAt, DateTime.UtcNow);
+                Status = ConsultaionStatus.Closed;
+                break;
+            default:
+                throw new InvalidOperationException($"Unhandled domain event: {domainEvent.GetType().Name}");
+        }
+    }
 }
 
 public enum ConsultaionStatus

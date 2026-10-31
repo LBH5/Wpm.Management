@@ -1,4 +1,3 @@
-using System;
 using Wpm.Clinic.Api.Application.Abstractions;
 using Wpm.Clinic.Api.Application.Commands;
 using Wpm.Clinic.Domain.ValueObjects;
@@ -9,8 +8,8 @@ public class AdministerDrugCommandHandler(IConsultationRepository consultationRe
 {
     public async Task HandleAsync(AdministerDrugCommand command, CancellationToken cancellationToken = default)
     {
-        var consultation = await consultationRepository.GetByIdAsync(command.ConsultationId, cancellationToken) ?? throw new KeyNotFoundException($"Consultation with ID {command.ConsultationId} not found");
+        var consultation = await consultationRepository.LoadAsync(command.ConsultationId, cancellationToken) ?? throw new KeyNotFoundException($"Consultation with ID {command.ConsultationId} not found");
         consultation.AdministredDrug(command.DrugId, new Dose(command.Quantity, command.UnitOfMeasure));
-        await consultationRepository.UpdateAsync(consultation, cancellationToken);
+        await consultationRepository.SaveAsync(consultation, cancellationToken);
     }
 }
