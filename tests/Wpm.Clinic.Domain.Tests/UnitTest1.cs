@@ -1,4 +1,5 @@
-﻿using Wpm.Clinic.Domain.ValueObjects;
+﻿using Wpm.Clinic.Domain.Entities;
+using Wpm.Clinic.Domain.ValueObjects;
 
 namespace Wpm.Clinic.Domain.Tests;
 
@@ -15,7 +16,7 @@ public class UnitTest1
     public void Consultation_Should_Not_Have_EndedAt_When_Created()
     {
         var consultation = new Consultation(Guid.NewGuid());
-        Assert.Null(consultation.EndedAt);
+        Assert.Null(consultation.Date.EndedAt);
     }
 
     [Fact]
@@ -34,7 +35,7 @@ public class UnitTest1
         consultation.SetWeight(16.5m);
         consultation.End();
         Assert.Equal(ConsultaionStatus.Closed, consultation.Status);
-        Assert.NotNull(consultation.EndedAt);
+        Assert.NotNull(consultation.Date.EndedAt);
     }
 
     [Fact]
@@ -101,7 +102,7 @@ public class UnitTest1
         consultation.SetDiagnosis("Diagnosis");
         consultation.SetTreatment("Treatment");
         consultation.SetWeight(16.5m);
-        IEnumerable<VitalSigns> vitalSigns = [new VitalSigns(38.5m, 80, 55)];
+        IEnumerable<VitalSigns> vitalSigns = [new VitalSigns(DateTime.UtcNow,38.5m, 80, 55)];
         consultation.RegisterVitalSigns(vitalSigns);
         Assert.Single(consultation.VitalSignsRecords);
         Assert.True(consultation.VitalSignsRecords[0] == vitalSigns.First());
@@ -115,7 +116,42 @@ public class UnitTest1
         consultation.SetTreatment("Treatment");
         consultation.SetWeight(16.5m);
         consultation.End();
-        IEnumerable<VitalSigns> vitalSigns = [new VitalSigns(38.5m, 80, 55)];
+        IEnumerable<VitalSigns> vitalSigns = [new VitalSigns(DateTime.UtcNow,38.5m, 80, 55)];
         Assert.Throws<InvalidOperationException>(() => consultation.RegisterVitalSigns(vitalSigns));
+    }
+
+    [Fact]
+    public void Consultation_DateTime_Range_Should_Not_Allow_EndDate_Before_StartDate()
+    {
+        var startDate = DateTime.UtcNow;
+        var endDate = startDate.AddDays(-1);
+        Assert.Throws<InvalidOperationException>(() => new DateTimeRange(startDate, endDate));
+    }
+
+    [Fact]
+    public void Consultation_DateTime_Range_Should_Be_Ongoing_When_EndDate_Is_Null()
+    {
+        var startDate = DateTime.UtcNow;
+        var dateTimeRange = new DateTimeRange(startDate);
+        Assert.Equal("Ongoing", dateTimeRange.Duration);
+    }
+
+    [Fact]
+    public void Consultation_DateTime_Range_Should_Calculate_Duration_Correctly_When_EndDate_Is_Set()
+    {
+        var startDate = DateTime.UtcNow;
+        var endDate = startDate.AddDays(1).AddHours(2).AddMinutes(30).AddSeconds(15);
+        var dateTimeRange = new DateTimeRange(startDate, endDate);
+        Assert.Equal("Duration: 1 days, 2 hours, 30 minutes, 15 seconds.", dateTimeRange.Duration);
+    }
+
+    [Fact]
+    public void Consultation_DateTime_Range_Should_Be_Equals()
+    {
+        var startDate = DateTime.UtcNow;
+        var endDate = startDate.AddDays(1);
+        var dateTimeRange1 = new DateTimeRange(startDate, endDate);
+        var dateTimeRange2 = new DateTimeRange(startDate, endDate);
+        Assert.Equal(dateTimeRange1, dateTimeRange2);
     }
 }

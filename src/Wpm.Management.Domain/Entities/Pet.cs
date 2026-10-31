@@ -1,4 +1,5 @@
-﻿using Wpm.Management.Domain.ValueObjects;
+﻿using Wpm.Management.Domain.Events;
+using Wpm.Management.Domain.ValueObjects;
 using Wpm.SharedKernel;
 
 namespace Wpm.Management.Domain.Entities;
@@ -42,6 +43,8 @@ public class Pet : Entity
             var w when w > idealRange.To => WeightClass.Overweight,
             _ => WeightClass.Ideal
         };
+
+        DomainEvents.PetWeightUpdated.Publish(new PetWeightUpdated(Id, Weight));
     }
 }
 public enum PetSex

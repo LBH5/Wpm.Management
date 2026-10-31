@@ -1,14 +1,13 @@
 ﻿using Wpm.Clinic.Domain.ValueObjects;
 using Wpm.SharedKernel;
 
-namespace Wpm.Clinic.Domain;
+namespace Wpm.Clinic.Domain.Entities;
 
 public class Consultation: AggregateRoot
 {
     private readonly List<DrugAdministration> _drugAdministrations = [];
     private readonly List<VitalSigns> _vitalSignsRecords = [];
-    public DateTime StartedAt { get; init; }
-    public DateTime? EndedAt { get; private set; }
+    public DateTimeRange Date { get; private set; }
     public Text? Diagnosis { get; private set; }
     public Text? Treatment { get; private set; }
     public PatientId PatientId { get; init; }
@@ -22,7 +21,7 @@ public class Consultation: AggregateRoot
         Id = Guid.NewGuid();
         PatientId = patientId;
         Status = ConsultaionStatus.Open;
-        StartedAt = DateTime.UtcNow;
+        Date = DateTime.UtcNow;
     }
     public void SetDiagnosis(Text diagnosis)
     {
@@ -49,7 +48,7 @@ public class Consultation: AggregateRoot
         {
             throw new InvalidOperationException("Cannot close consultation without diagnosis, treatment, and weight.");
         }
-        EndedAt = DateTime.UtcNow;
+        Date = new DateTimeRange(Date.StartedAt, DateTime.UtcNow);
         Status = ConsultaionStatus.Closed;
     }
 
